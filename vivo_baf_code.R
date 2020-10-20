@@ -6,6 +6,9 @@ install.packages("tidyverse")
 library(tidyverse)
 library(tidyr)
 library(dplyr)
+library(ggplot2)
+
+head(vivobaf)
 
 # convert data frame to tibble type
 baf <- as_tibble(vivobaf)
@@ -38,6 +41,27 @@ baf.long.pct <- baf.long %>%
 print(baf.long.pct, n=100)
 str(baf.long.pct)
 
+# makes separate anterior/ posterior dataframes
+anterior <- subset(baf.long.pct, ant.post == "ant", 
+                  select = c(treatment, larva, min, area.pct.change))
+
+posterior <- subset(baf.long.pct, ant.post == "post", 
+                  select = c(treatment, larva, min, area.pct.change))
+
+print(anterior, n=30)
+
+#plot the two dataframes together
+ggplot(data = anterior, aes(y= area.pct.change , x= min, group= larva, colour= treatment)) +
+  geom_line() +
+  geom_line(data = posterior, linetype= "dashed") +
+  labs(x = "min", y = "% change") +
+  theme_classic()
+
+
+
+
+#### base r way that Jo figured out. could be useful for other things, but loops lines back in this case
+
 plot(baf.long.pct$area.pct.change~baf.long.pct$min, 
      main= "Bafilomycin",
      type="n", #plot without any lines or points
@@ -59,6 +83,8 @@ for (i in 1: length(unique(baf.long.pct$treatment))) {
 
 legend(5, 13, legend=c("Bafilomycin", "Control"), col=c("hotpink", "darkgreen"), lty=1, bty = "n")
 
+
+#same but no colour diffs
 plot.baf<-baf.long.pct %>%
   group_by(treatment,ant.post) %>%
   as.data.frame() %>%
@@ -68,4 +94,3 @@ plot.baf<-baf.long.pct %>%
        tcl=0.5, # points axis tick marks inwards (negative points them outwards)
        data = .)
 
-##nbfxghx
