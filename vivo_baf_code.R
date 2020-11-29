@@ -50,7 +50,77 @@ posterior <- subset(baf.long.pct, ant.post == "post",
 
 print(anterior, n=30)
 
-#plot the two dataframes together
+#making means
+ant.means <- anterior %>% 
+  group_by(min, treatment) %>% 
+  dplyr::summarise(
+    ant.mean = mean(area.pct.change))
+
+print(ant.means)
+
+post.means <- posterior %>% 
+  group_by(min, treatment) %>% 
+  summarise(
+    post.mean = mean(area.pct.change))
+
+print(post.means)
+
+#combining means
+means <- ant.means
+print(means)
+
+means$post.mean <- post.means$post.mean
+
+means <- arrange(means, treatment)
+
+#make sd values
+ant.stdv <- anterior %>%
+  group_by(treatment, min) %>%
+  dplyr::summarize(
+    ant.sd = sd(area.pct.change))
+
+print(ant.stdv)
+
+post.stdv <- posterior %>%
+  group_by(treatment, min) %>%
+  dplyr::summarize(
+    post.sd = sd(area.pct.change))
+
+print(post.stdv)
+
+#combine sd values
+stdv <- post.stdv
+print(stdv)
+
+stdv$ant.sd <- ant.stdv$ant.sd
+
+#combine means and sdtvs
+mean.sd <- means
+print(mean.sd)
+
+mean.sd$post.sd <- stdv$post.sd
+mean.sd$ant.sd <- stdv$ant.sd
+
+########## plotting  ###########
+
+#plot means/ sd
+
+ggplot(data = means, aes(x= min, colour= treatment)) +
+  geom_point(aes(y= ant.mean)) +
+  geom_point(aes(y= post.mean)) +
+  geom_line(aes(y= ant.mean)) +
+  geom_line(linetype = "dashed", aes(y= post.mean)) +
+  geom_errorbar(data= mean.sd, linetype = "dashed",
+                aes(x= min, ymin= post.mean - post.sd, ymax= post.mean + post.sd), group= "treatment",
+                width= 2) +
+  geom_errorbar(data= mean.sd,
+                aes(x= min, ymin= ant.mean - ant.sd, ymax= ant.mean + post.sd), group= "treatment",
+                width= 2) +
+  labs(x = "Min", y = "% change") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+#### plot the two dataframes together (raw dat)
 ggplot(data = anterior, aes(y= area.pct.change , x= min, group= larva, colour= treatment)) +
   geom_line() +
   geom_line(data = posterior, linetype= "dashed") +
